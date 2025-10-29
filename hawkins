@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>TES SPIRITUAL — Pengasuh Santri</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fbfdff;--card:#fff;--muted:#556074;--accent:#1e73d8;--gold:#b7791f}
+body{font-family:Nunito,system-ui,-apple-system,"Segoe UI",Roboto,Arial;margin:0;background:var(--bg);color:#0b1220}
+.container{max-width:980px;margin:28px auto;padding:18px}
+.card{background:var(--card);border-radius:12px;padding:18px;box-shadow:0 8px 26px rgba(2,6,23,.06);margin-bottom:16px}
+h1{margin:0;font-size:22px;color:var(--accent)}
+.sub{color:var(--muted);margin-top:6px}
+label{display:block;margin-top:12px;font-weight:700}
+input[type=text], textarea, select{width:100%;padding:10px;border-radius:8px;border:1px solid #e6edf2;margin-top:6px;box-sizing:border-box}
+button{background:var(--accent);color:white;border:0;padding:10px 14px;border-radius:8px;cursor:pointer}
+.btn-ghost{background:transparent;color:var(--accent);border:1px solid #e6eef6;padding:10px;border-radius:8px}
+.small{font-size:13px;color:var(--muted)}
+.statement{margin:12px 0;padding:12px;border-radius:8px;background:linear-gradient(180deg,#ffffff,#fbfcff);border:1px solid #eef6ff}
+.likert{display:flex;gap:10px;margin-top:8px;align-items:center;flex-wrap:wrap}
+.likert label{display:flex;align-items:center;gap:6px;font-weight:600}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.hidden{display:none}
+.muted-box{background:#fbfbfd;border-left:4px solid #eef2ff;padding:10px;border-radius:6px;color:var(--muted)}
+.result-title{color:var(--gold);font-weight:800;font-size:18px;margin-top:8px}
+.riyadhah{margin-top:12px}
+.footer{font-size:13px;color:var(--muted);text-align:center;margin-top:18px}
+.progress{font-size:13px;color:var(--muted);margin-top:8px}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="card">
+    <h1>TES SPIRITUAL — Pengasuh Santri</h1>
+    <div class="sub">Tes Level Spiritual ini dikembangkan oleh Multazam Zakaria</div>
+  </div>
+
+  <div class="card" id="cardIntro">
+    <label>Nama Lengkap</label>
+    <input id="nama" type="text" placeholder="Nama pengasuh..." />
+    <label>Nama Instansi / Pesantren</label>
+    <input id="instansi" type="text" placeholder="Nama pesantren / instansi..." />
+    <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+      <button id="btnStart" onclick="start()">Mulai Tes</button>
+      <button class="btn-ghost" onclick="resetAll()">Reset</button>
+      <div style="flex:1"></div>
+      <div class="small">Isilah dengan jujur. Skala: 1 (Sangat Tidak Sesuai) — 5 (Sangat Sesuai)</div>
+    </div>
+  </div>
+
+  <div class="card hidden" id="cardTest">
+    <h3>Asesmen — Jawab setiap pernyataan</h3>
+    <div id="progress" class="progress"></div>
+    <form id="testForm">
+      <div id="questions"></div>
+      <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+        <button type="button" onclick="submitTest()">Lihat Hasil</button>
+        <button type="button" class="btn-ghost" onclick="cancelTest()">Batal</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="card hidden" id="cardResult">
+    <div id="resultMeta" class="small"></div>
+    <div id="resultBlock"></div>
+
+    <div style="margin-top:14px">
+      <button onclick="downloadResultPDF()">Cetak / Simpan (Print)</button>
+      <button class="btn-ghost" onclick="downloadResultJSON()">Unduh JSON</button>
+      <div style="flex:1"></div>
+    </div>
+
+    <div class="riyadhah" id="reportArea"></div>
+  </div>
+
+  <div class="footer">© Tes Level Spiritual — Pengasuh Santri</div>
+</div>
+
+<script>
+/* ------------------------------
+  Konfigurasi: Formspree endpoint
+  ------------------------------ */
+const FORM_ENDPOINT = 'https://formspree.io/f/xwpwbypj'; // sudah Anda sediakan
+
+/* ------------------------------
+  Data level lengkap (dari Kiai).
+  Setiap level berisi id,name,scale_value,description,statements[5],riyadhah:{purpose,guidance(HTML)}.
+  (Isi seluruh level yang Kiai kirim sebelumnya dimasukkan di sini.)
+  Untuk ringkasan saya masukkan semua level lengkap sesuai input Kiai.
+  ------------------------------ */
+
+const LEVELS = [
+  {
+    "id":"shame","name":"Malu (Shame)","scale_value":20,
+    "description":"Level Malu (Shame) adalah palung terdalam dalam Peta Kesadaran manusia. Ini bukan sekadar rasa malu sesaat karena melakukan kesalahan, melainkan kondisi jati diri yang terasa rusak dan tidak berharga. Ini adalah titik di mana individu merasa ingin menghilang dari muka bumi.",
+    "statements":[
+      "Sering menunduk/menghindari kontak mata dengan pimpinan/rekan senior.",
+      "Merasa diri tidak pantas memimpin atau memberi nasihat spiritual.",
+      "Sulit berbicara di depan umum, merasa apa yang dikatakannya tidak berharga.",
+      "Cenderung menyembunyikan kesalahan, takut dihakimi atau diekspos.",
+      "Sering berpikir untuk mengundurkan diri karena merasa 'gagal total.'"
+    ],
+    "riyadhah":{
+      "purpose":"Melepaskan rasa malu dan menumbuhkan penerimaan diri.",
+      "guidance":"<ol><li><strong>Pengakuan Kecil:</strong> Akui satu kelemahan kepada satu rekan terpercaya setiap minggu. <em>Tujuan:</em> memutus rantai isolasi dan mengaktifkan energi GUILT.</li><li><strong>Ambil Tanggung Jawab Sederhana:</strong> Ambil tugas kecil & selesaikan melebihi ekspektasi. <em>Tujuan:</em> bukti kapasitas diri.</li><li><strong>Afirmasi Nilai Diri:</strong> Tulis 3 kalimat nilai diri dan bacakan tiap pagi selama 40 hari. <em>Tujuan:</em> mengganti self-hatred dengan identitas positif.</li><li><strong>Istighfar Harian:</strong> Ucapkan 'Astaghfirullahal Adzim' 100x/hari. <em>Tujuan:</em> membersihkan energi batin.</li><li><strong>Salat Taubat:</strong> 2 rakaat 1–2x/minggu. <em>Tujuan:</em> terapi spiritual menargetkan self-hatred.</li><li><strong>Menulis Surat Cinta Diri:</strong> Satu halaman (Maaf & Terima Kasih). <em>Tujuan:</em> menyelesaikan konflik batin dan mengaktifkan vulnerability.</li></ol>"
+    }
+  },
+
+  {
+    "id":"guilt","name":"Rasa Bersalah (Guilt)","scale_value":30,
+    "description":"Level Rasa Bersalah (Guilt) merupakan langkah maju dari Malu, karena pada tingkatan ini, Anda telah menemukan cukup energi untuk menunjuk pada suatu tindakan spesifik yang salah.",
+    "statements":[
+      "Terlalu keras menghukum diri atas kegagalan atau kesalahan santri.",
+      "Sering menyalahkan sistem atau rekan kerja lain di depan santri/pihak luar.",
+      "Mengatakan bahwa ia 'pantas dihukum' atau mengalami kesulitan.",
+      "Merasa santri yang bermasalah adalah balasan atas dosanya di masa lalu.",
+      "Terlalu fokus pada kesalahan masa lalu daripada fokus pada solusi saat ini."
+    ],
+    "riyadhah":{
+      "purpose":"Menghentikan Penghukuman Diri, Meredam Kecemasan, dan Menerima Diri.",
+      "guidance":"<ol><li><strong>Minta Feedback Terbalik:</strong> Dekati satu atau dua santri/rekan kerja yang akrab dan minta feedback jujur tentang hal yang sudah Anda lakukan dengan baik. <em>Tujuan:</em> menggeser fokus dari kesalahan ke pengakuan potensi.</li><li><strong>Bicara Solusi:</strong> Saat rasa bersalah datang, hentikan pikiran dan tuliskan 'lima solusi praktis'. <em>Tujuan:</em> mengalihkan energi menghukum diri ke tindakan netral.</li><li><strong>Tanamkan Prinsip Amanah:</strong> Tuliskan 'Pengasuhan adalah Amanah, bukan Hukuman.' <em>Tujuan:</em> memutus ikatan emosional antara peran dan rasa bersalah.</li><li><strong>Tasbih (Subhanallah):</strong> 100x setelah Salat Wajib. <em>Tujuan:</em> alihkan fokus ke kesucian Ilahi.</li><li><strong>Butterfly Hug:</strong> tepuk dada secara lembut 1–2 menit saat kecemasan. <em>Tujuan:</em> self-soothing.</li><li><strong>Terapi SEFT/EFT:</strong> pelajari teknik tapping. <em>Tujuan:</em> menurunkan intensitas emosi.</li></ol>"
+    }
+  },
+
+  {
+    "id":"apathy","name":"Apatis (Apathy)","scale_value":50,
+    "description":"Level Apatis (Apathy) adalah kondisi putus asa yang mendalam, dihasilkan dari pengurasan energi yang panjang dari Rasa Bersalah dan Malu.",
+    "statements":[
+      "Malas membuat program baru atau mengevaluasi program lama.",
+      "Menjawab masalah santri dengan respons 'terserah' atau 'sudah takdirnya' (pasrah negatif).",
+      "Secara rutin tidak hadir dalam pertemuan atau piket tanpa alasan yang kuat.",
+      "Sering menunda pekerjaan penting hingga batas akhir.",
+      "Menunjukkan raut wajah datar/kosong saat berinteraksi dengan santri yang bermasalah."
+    ],
+    "riyadhah":{
+      "purpose":"Mengaktifkan energi, kehendak, dan menarik energi kembali ke tubuh.",
+      "guidance":"<ol><li><strong>Tugas Wajib Menantang:</strong> Buat to-do list minimal 3 tugas baru yang menantang & selesaikan. <em>Tujuan:</em> melawan kelumpuhan (Apathy).</li><li><strong>Ubah Pola Harian:</strong> Selama 7 hari, ubah rute berjalan/tempat makan/jadwal piket. <em>Tujuan:</em> memecah pola kebiasaan yang mematikan semangat.</li><li><strong>Jauhi Stimulan & Fokus Kesehatan:</strong> Batasi kafein/gula & lakukan jalan 30 menit setiap hari selama 7 hari. <em>Tujuan:</em> meningkatkan energi fisik.</li><li><strong>Dzikir Yaa Hayyu, Yaa Qayyum:</strong> 70x setelah Subuh. <em>Tujuan:</em> membangkitkan energi.</li><li><strong>Salat Fajar Tepat Waktu:</strong> Laksanakan Salat Fajar tepat waktu. <em>Tujuan:</em> melatih disiplin kehendak.</li><li><strong>Mandi Taubat:</strong> Minimal seminggu sekali. <em>Tujuan:</em> simbolis membersihkan energi lesu.</li></ol>"
+    }
+  },
+
+  {
+    "id":"grief","name":"Sedih (Grief)","scale_value":75,
+    "description":"Level Sedih (Grief) adalah kondisi duka dan penyesalan yang aktif, namun masih melumpuhkan.",
+    "statements":[
+      "Sering mengungkit masalah santri yang sudah pindah atau masa lalu yang ideal.",
+      "Cepat menangis atau merasa terpuruk saat dikritik pimpinan.",
+      "Sulit melepaskan rasa kecewa atas kegagalan proyek di masa lalu.",
+      "Merasa bahwa pengasuhan adalah pengorbanan yang berat dan selalu merugikan.",
+      "Mencari simpati dari rekan kerja lain tentang betapa berat bebannya."
+    ],
+    "riyadhah":{
+      "purpose":"Melihat ke depan, grounding, mengganti kesedihan dengan syukur.",
+      "guidance":"<ol><li><strong>Jurnal Masa Depan:</strong> Tulis 5 hal yang ingin Anda capai bulan depan. <em>Tujuan:</em> mengalihkan fokus ke perencanaan & harapan.</li><li><strong>Aksi Kontrol Kecil:</strong> Rapikan satu area kerja tuntas. <em>Tujuan:</em> simbolis mengendalikan kekacauan eksternal.</li><li><strong>Syukur Realistis:</strong> Catat 5 momen positif tiap malam. <em>Tujuan:</em> hentikan identitas korban.</li><li><strong>Hamdalah (Alhamdulillah):</strong> 100x setelah Maghrib. <em>Tujuan:</em> alihkan kesedihan jadi syukur.</li><li><strong>Jalan Hening:</strong> Jalan 10-15 menit tanpa alas kaki sambil dzikir. <em>Tujuan:</em> grounding.</li><li><strong>Salam Penuh Cinta:</strong> Ucap salam pada pohon/bunga/hewan. <em>Tujuan:</em> alihkan fokus ke kasih sayang alam.</li></ol>"
+    }
+  },
+
+  {
+    "id":"fear","name":"Takut (Fear)","scale_value":100,
+    "description":"Level Takut (Fear) adalah kondisi kecemasan yang konstan dan kebutuhan berlebihan akan rasa aman.",
+    "statements":[
+      "Terlalu kaku pada aturan (menghindari fleksibilitas) karena takut disalahkan.",
+      "Sangat khawatir dan cemas berlebihan menjelang evaluasi atau kedatangan pimpinan.",
+      "Tidak berani mengambil keputusan mandiri, selalu menunggu instruksi detail.",
+      "Tidak berani mencoba metode pengasuhan baru karena takut gagal.",
+      "Sering memeriksa ulang atau mengawasi santri secara berlebihan (tidak percaya)."
+    ],
+    "riyadhah":{
+      "purpose":"Mendorong Anda untuk mengambil risiko, menetapkan rasa aman batin, dan menguji kehendak pribadi.",
+      "guidance":"<ol><li><strong>Latihan Otonomi:</strong> Ambil 3 keputusan 'tidak fatal' tanpa berkonsultasi. <em>Tujuan:</em> melatih kemandirian.</li><li><strong>Metode Baru:</strong> Coba satu metode pengasuhan baru selama seminggu. <em>Tujuan:</em> memaksa keluar zona aman.</li><li><strong>Memberi Kepercayaan Kecil:</strong> Beri santri tugas penuh tanggung jawab tanpa pengawasan berlebihan. <em>Tujuan:</em> melatih percaya & tawakal.</li><li><strong>Dzikir Hasbunallah:</strong> 100x setelah Isya. <em>Tujuan:</em> menetapkan rasa aman batin.</li><li><strong>Mendoakan Orang Lain Diam-Diam:</strong> Doakan orang yang membuat Anda khawatir. <em>Tujuan:</em> melawan isolasi Fear.</li><li><strong>Mandi Taubat (Periodik):</strong> Lakukan seminggu sekali. <em>Tujuan:</em> membersihkan energi Fear.</li></ol>"
+    }
+  },
+
+  {
+    "id":"desire","name":"Keinginan (Desire)","scale_value":125,
+    "description":"Level Keinginan (Desire) adalah kondisi ambisi dan kerinduan yang intens.",
+    "statements":[
+      "Melakukan tugas pengasuhan hanya jika ada imbalan atau potensi pujian.",
+      "Merasa sangat kecewa atau frustrasi jika proyek yang dibuatnya tidak diakui.",
+      "Terlalu terobsesi dengan hasil daripada proses santri.",
+      "Mengeluh jika mendapat tugas yang tidak sesuai dengan keinginannya.",
+      "Selalu membicarakan keberhasilan di masa lalu untuk menarik perhatian/pengakuan."
+    ],
+    "riyadhah":{
+      "purpose":"Pengendalian diri, memurnikan niat dari pamrih, dan menegaskan batas.",
+      "guidance":"<ol><li><strong>Penundaan Kepuasan:</strong> Tunggu 24 jam sebelum membicarakan pencapaian. <em>Tujuan:</em> melatih kesabaran.</li><li><strong>Tugas Tanpa Pamrih:</strong> Ambil 3 tugas back-office yang tidak terlihat orang. <em>Tujuan:</em> memurnikan niat.</li><li><strong>Tegaskan Batas Diri:</strong> Katakan 'Tidak' pada 3 permintaan yang melanggar batas. <em>Tujuan:</em> mengendalikan Desire untuk menyenangkan orang.</li><li><strong>Dzikir Tauhid:</strong> Lailahaillallah 100x. <em>Tujuan:</em> fokuskan keinginan pada Tuhan.</li><li><strong>Dzikir La Hawla:</strong> 100x saat dorongan kuat muncul. <em>Tujuan:</em> mengendalikan nafsu.</li><li><strong>Sadar Mengunyah:</strong> 15-20 kali tiap suap. <em>Tujuan:</em> latih kesabaran.</li></ol>"
+    }
+  },
+
+  {
+    "id":"anger","name":"Marah (Anger)","scale_value":150,
+    "description":"Level Marah (Anger) adalah kondisi kebencian dan permusuhan yang aktif.",
+    "statements":[
+      "Cepat meninggikan suara atau membentak santri saat frustrasi.",
+      "Merespons kritik dengan defensif atau argumen yang emosional.",
+      "Sering mengeluh secara verbal tentang rekan kerja di belakang mereka.",
+      "Menggunakan hukuman yang berlebihan atau tidak konsisten sebagai pelampiasan.",
+      "Melakukan tindakan impulsif tanpa memikirkan konsekuensi jangka panjang."
+    ],
+    "riyadhah":{
+      "purpose":"Mengubah reaksi menjadi rasionalitas dan mengontrol emosi.",
+      "guidance":"<ol><li><strong>Mekanisme Pause & Analysis:</strong> Saat amarah datang, berhenti 5 detik, tarik napas 3x, tulis 3 alasan logis sebelum merespons. <em>Tujuan:</em> alihkan energi emosional ke intelektual.</li><li><strong>Dokumentasi Rasional:</strong> Ubah semua keluhan emosional menjadi laporan tertulis objektif. <em>Tujuan:</em> salurkan energi Anger ke konstruktif.</li><li><strong>Memelihara Ego Sehat:</strong> Catat hal-hal yang Anda banggakan tentang metode Anda. <em>Tujuan:</em> arahkan energi ke Pride sehat.</li><li><strong>Dzikir Ta'awudz:</strong> Ucap A'udzubillahi minasy syaithonir rajim 100x saat emosi memuncak. <em>Tujuan:</em> putus koneksi energi negatif.</li><li><strong>Dzikir Ya Halim/Ya Wadud:</strong> 10x perenungan. <em>Tujuan:</em> masukkan sifat penenang.</li><li><strong>Menulis Surat Cinta Orang Lain:</strong> Maaf & terima kasih. <em>Tujuan:</em> pelepasan emosi.</li></ol>"
+    }
+  },
+
+  {
+    "id":"pride","name":"Bangga (Pride)","scale_value":175,
+    "description":"Level Bangga (Pride) adalah kondisi kesombongan dan ilusi keunggulan.",
+    "statements":[
+      "Sukar menerima bahwa ada metode pengasuhan yang lebih baik dari miliknya.",
+      "Merasa lebih senior/pintar dari rekan kerja yang lebih muda/santri.",
+      "Memberikan nasihat tanpa diminta, dengan nada menggurui.",
+      "Membenarkan kegagalan program karena 'santrinya yang tidak berkualitas.'",
+      "Menolak feedback dari santri, merasa kritik itu tidak relevan."
+    ],
+    "riyadhah":{
+      "purpose":"Menghancurkan ilusi superioritas dan mengambil tanggung jawab mutlak.",
+      "guidance":"<ol><li><strong>Runtuhkan Ilusi Superioritas:</strong> Minta kritik radikal dari 2 orang & tindaklanjuti 1 saran paling menyakitkan ego. <em>Tujuan:</em> lawan arogansi.</li><li><strong>Ambil Tanggung Jawab Penuh:</strong> Akui satu kesalahan sistemik di depan rekan kerja. <em>Tujuan:</em> memupuk keberanian.</li><li><strong>Tindakan Berisiko Moral:</strong> Dukung santri yang dikritik rekan lain. <em>Tujuan:</em> aktifkan courage sejati.</li><li><strong>Dzikir Subhana Rabbi al-Adzim:</strong> 100x. <em>Tujuan:</em> alihkan fokus ke Kebesaran Ilahi.</li><li><strong>Merenungkan Ketidaksempurnaan:</strong> Tulis 3 hal yang tidak bisa diperbaiki & baca tiap hari. <em>Tujuan:</em> persiapkan diri menuju courage.</li></ol>"
+    }
+  },
+
+  {
+    "id":"courage","name":"Keberanian (Courage)","scale_value":200,
+    "description":"Keberanian adalah titik kritis — Anda melihat masalah sebagai tantangan yang dapat diatasi.",
+    "statements":[
+      "Berani mengakui kesalahan di depan pimpinan/santri tanpa menyalahkan pihak lain.",
+      "Mampu mengambil keputusan berisiko yang mendukung pertumbuhan santri.",
+      "Melihat kesulitan program sebagai tantangan yang bisa diatasi, bukan rintangan.",
+      "Secara proaktif mengajukan inisiatif perbaikan sistem pengasuhan.",
+      "Mendukung rekannya yang dikritik, mengambil tanggung jawab bersama."
+    ],
+    "riyadhah":{
+      "purpose":"Mengubah netralitas menjadi kemauan aktif dan antusiasme.",
+      "guidance":"<ol><li><strong>Sukarela Extra Mile:</strong> Ambil 1 tugas tambahan yang bukan kewajiban & selesaikan. <em>Tujuan:</em> ubah neutral menjadi willingness.</li><li><strong>Ekspresikan Antusiasme:</strong> Tunjukkan antusias pada 5 tugas rutin. <em>Tujuan:</em> aktifkan energi positif.</li><li><strong>Hentikan Rasa 'Cukup':</strong> Cari satu poin perbaikan ekstra setelah tugas. <em>Tujuan:</em> lawan kepuasan.</li><li><strong>Salat Dhuha Penuh Syukur:</strong> minimal 4 rakaat. <em>Tujuan:</em> sambungkan syukur & will.</li><li><strong>Dzikir Yaa Muqallib al-qulub:</strong> 100x. <em>Tujuan:</em> mohon hati aktif.</li><li><strong>Jalan Hening (Niat Aktif):</strong> jalan tanpa alas kaki & niat tarik energi bumi. <em>Tujuan:</em> stabilkan semangat.</li></ol>"
+    }
+  },
+
+  {
+    "id":"neutrality","name":"Netralitas (Neutrality)","scale_value":250,
+    "description":"Netralitas adalah kenyamanan dan kelenturan yang tidak reaktif terhadap drama luar.",
+    "statements":[
+      "Mampu menjadi mediator yang adil dalam konflik tanpa memihak.",
+      "Bersikap tenang dan stabil, tidak mudah terpengaruh oleh drama asrama.",
+      "Menerima perubahan jadwal atau aturan baru dengan fleksibel.",
+      "Mampu berinteraksi secara sama baik dengan semua rekan kerja, tanpa sentimen pribadi.",
+      "Bekerja secara konsisten dan teratur, tidak terpengaruh oleh tekanan luar."
+    ],
+    "riyadhah":{
+      "purpose":"Mengubah netralitas menjadi kemauan aktif dan antusiasme.",
+      "guidance":"<ol><li><strong>Sukarela Extra Mile:</strong> Ambil tugas tambahan & selesaikan. <em>Tujuan:</em> ubah netralitas pasif ke willingness.</li><li><strong>Ekspresikan Antusiasme:</strong> Tunjuukkan ekspresi antusias pada 5 tugas. <em>Tujuan:</em> aktifkan energi.</li><li><strong>Hentikan Rasa 'Cukup':</strong> Cari 1 perbaikan ekstra. <em>Tujuan:</em> lawan kepuasan.</li><li><strong>Salat Dhuha:</strong> 4 rakaat. <em>Tujuan:</em> syukur & will.</li><li><strong>Dzikir Yaa Muqallib:</strong> 100x. <em>Tujuan:</em> mohon perubahan hati.</li><li><strong>Jalan Hening:</strong> grounding & stabilisasi.</li></ol>"
+    }
+  },
+
+  {
+    "id":"willingness","name":"Kemauan (Willingness)","scale_value":310,
+    "description":"Kemauan adalah kondisi proaktif, antusias, dan berkomitmen pada perbaikan & pembelajaran.",
+    "statements":[
+      "Secara sukarela menawarkan diri membantu pekerjaan yang sulit atau tidak disukai.",
+      "Menunjukkan antusiasme tinggi saat membuat program baru.",
+      "Selalu berusaha mencari cara, bukan mencari alasan, untuk menyelesaikan masalah.",
+      "Cepat bangkit dan memulai kembali setelah mengalami kegagalan besar.",
+      "Melihat potensi positif dari setiap santri, bahkan yang paling bermasalah."
+    ],
+    "riyadhah":{
+      "purpose":"Melepaskan keterikatan pada effort dan menerima takdir.",
+      "guidance":"<ol><li><strong>Memaafkan Total:</strong> Buat daftar orang yang menghambat effort & maafkan. <em>Tujuan:</em> persiapan menuju Acceptance.</li><li><strong>Fokus Solusi Sistemik:</strong> Rancang perubahan sistemik. <em>Tujuan:</em> efektivitas sistem.</li><li><strong>Mengucapkan Syukur Realistis:</strong> syukur atas kesempatan berusaha. <em>Tujuan:</em> lepaskan keterikatan hasil.</li><li><strong>Dzikir Radhitu billahi rabba:</strong> 3x setelah Salat. <em>Tujuan:</em> tanamkan acceptance.</li><li><strong>Mendoakan Orang Lain Diam-Diam (Ridho):</strong> doakan ridho untuk orang lain. <em>Tujuan:</em> kuatkan acceptance.</li></ol>"
+    }
+  },
+
+  {
+    "id":"acceptance","name":"Penerimaan (Acceptance)","scale_value":350,
+    "description":"Penerimaan adalah wawasan damai bahwa segala sesuatu berjalan sebagaimana mestinya.",
+    "statements":[
+      "Menerima realitas (misal keterbatasan anggaran) tanpa mengeluh.",
+      "Mampu memaafkan kesalahan besar santri atau rekan kerja dengan tulus.",
+      "Fokus pada solusi sistemik daripada mencari siapa yang salah.",
+      "Melihat kritik sebagai umpan balik yang diperlukan, bukan serangan personal.",
+      "Merasa tenang meskipun hasil program tidak sempurna."
+    ],
+    "riyadhah":{
+      "purpose":"Mengubah penerimaan pasif menjadi pengetahuan dan struktur logis.",
+      "guidance":"<ol><li><strong>Sistematika Emosi:</strong> Amati satu emosi hari ini; catat pemicu, reaksi, pola. <em>Tujuan:</em> ubah penerimaan pasif jadi analisis.</li><li><strong>Penelitian Metode:</strong> Baca 1 artikel & ambil 3 poin aplikatif. <em>Tujuan:</em> aktifkan Reason.</li><li><strong>Merumuskan Hipotesis:</strong> Buat hipotesis akar masalah. <em>Tujuan:</em> struktur analisis.</li><li><strong>Dzikir Inna Fatahna & Salat Hajat:</strong> baca Inna fatahna & lakukan Salat Hajat. <em>Tujuan:</em> mohon pembukaan ilmu.</li><li><strong>Sadar Mengunyah (Analisis):</strong> fokus nutricional & energi. <em>Tujuan:</em> dukung analisis.</li></ol>"
+    }
+  },
+
+  {
+    "id":"reason","name":"Akal Budi (Reason)","scale_value":400,
+    "description":"Akal Budi adalah kondisi intelektual, logis, dan rasional.",
+    "statements":[
+      "Mampu merumuskan masalah pengasuhan menjadi hipotesis yang bisa diuji.",
+      "Membuat keputusan berdasarkan data, logika, dan analisis mendalam.",
+      "Secara rutin membaca dan meneliti metode pengasuhan untuk perbaikan sistem.",
+      "Mampu melihat hubungan sebab-akibat yang kompleks di balik perilaku santri.",
+      "Menjaga emosi tetap stabil agar proses berpikir tetap objektif."
+    ],
+    "riyadhah":{
+      "purpose":"Melebur logika ke dalam kasih sayang tanpa syarat dan rahmat.",
+      "guidance":"<ol><li><strong>Pengampunan yang Tidak Logis:</strong> Maafkan seseorang yang logika Anda sulit memaafkan. <em>Tujuan:</em> pecah benteng Reason dingin.</li><li><strong>Meditasi Rahmat:</strong> Duduk hening 10 menit; visualisasikan cahaya rahmat. <em>Tujuan:</em> tumbuhkan Love.</li><li><strong>Kebaikan Tanpa Pembalasan:</strong> 3 kebaikan kecil tanpa harap balasan. <em>Tujuan:</em> memurnikan niat.</li><li><strong>Selawat Nabi:</strong> Selawat 300x/hari. <em>Tujuan:</em> konektor Love.</li><li><strong>Dzikir Ya Wadud:</strong> 100x. <em>Tujuan:</em> tarik sifat cinta Allah.</li></ol>"
+    }
+  },
+
+  {
+    "id":"love","name":"Cinta (Love)","scale_value":500,
+    "description":"Cinta adalah kasih sayang tanpa syarat, pengampunan, pengakuan nilai Ilahi dalam setiap makhluk.",
+    "statements":[
+      "Memberikan perhatian dan kasih sayang yang tulus kepada santri yang paling dibenci.",
+      "Mengutamakan kebaikan bersama daripada aturan kaku.",
+      "Secara batin melihat keindahan atau potensi Ilahi di balik kekurangan setiap orang.",
+      "Merasa terhubung secara mendalam dengan seluruh komunitas pesantren.",
+      "Mampu memaafkan rekan kerja yang menyakitinya tanpa mengharapkan balasan/perubahan dari mereka."
+    ],
+    "riyadhah":{
+      "purpose":"Mengubah cinta serius menjadi suka cita dan ringan.",
+      "guidance":"<ol><li><strong>Tawa & Ringan:</strong> Cari 3 momen tertawa setiap hari. <em>Tujuan:</em> ubah Love jadi Joy.</li><li><strong>Pelayanan Tanpa Beban:</strong> Lakukan pelayanan dengan hati ringan. <em>Tujuan:</em> ciptakan Joy.</li><li><strong>Syukur Spontan:</strong> Ucap Alhamdulillah spontan pada momen kecil. <em>Tujuan:</em> kuatkan Joy.</li><li><strong>Dzikir Tasbih & Takbir Gabungan:</strong> 100x gabungan. <em>Tujuan:</em> energi positif.</li></ol>"
+    }
+  },
+
+  {
+    "id":"joy","name":"Suka Cita (Joy)","scale_value":540,
+    "description":"Suka Cita adalah kebahagiaan batin stabil, independen, dan transformatif.",
+    "statements":[
+      "Melakukan tugas pengasuhan yang paling berat dengan ringan dan senyum tulus.",
+      "Merasa bahagia secara intrinsik, tidak bergantung pada keberhasilan atau pujian luar.",
+      "Mampu menertawakan kesalahan dan kesulitan diri sendiri dan orang lain.",
+      "Memancarkan energi damai dan optimisme yang menular ke seluruh asrama.",
+      "Merasa bersyukur dan gembira dalam setiap momen, baik suka maupun duka."
+    ],
+    "riyadhah":{
+      "purpose":"Menstabilkan kegembiraan menjadi kedamaian (Sakinah).",
+      "guidance":"<ol><li><strong>Alarm Sadar (Hudhūr):</strong> Setel alarm setiap 1 jam; berhenti 30-60 detik & sadari napas. <em>Tujuan:</em> latih kehadiran hati.</li><li><strong>Latihan Diam (1 Jam):</strong> Duduk hening 1 jam/hari. <em>Tujuan:</em> ciptakan Sakinah.</li><li><strong>Kendalikan Sensasi:</strong> Amati sensasi joy tanpa berekspresi. <em>Tujuan:</em> stabilkan Joy.</li><li><strong>Hentikan Effort:</strong> Lakukan ibadah tanpa niat pamrih. <em>Tujuan:</em> lepaskan keterikatan.</li><li><strong>Dzikir Ismu Dzat (Allah):</strong> 1000x (dzikir khafi). <em>Tujuan:</em> membersihkan sisa ego.</li></ol>"
+    }
+  },
+
+  {
+    "id":"peace","name":"Kedamaian (Peace)","scale_value":600,
+    "description":"Kedamaian adalah kondisi transendensi dan ketenangan absolut.",
+    "statements":[
+      "Saya mampu mencapai keheningan batin (sakinah) dalam waktu yang lama.",
+      "Kehadiran saya saja dapat menenangkan lingkungan asrama yang ribut.",
+      "Saya berpikir, berbicara, dan bertindak secara selaras tanpa adanya kontradiksi batin.",
+      "Saya tidak memiliki ketakutan atau kekhawatiran sedikit pun tentang masa depan.",
+      "Seluruh tindakan saya didorong oleh Fadl (anugerah), bukan lagi oleh usaha pribadi."
+    ],
+    "riyadhah":{
+      "purpose":"Fana (peleburan ego) dan manifestasi Kesatuan (Wahdah).",
+      "guidance":"<ol><li><strong>Persepsi Kesatuan (Wahdah):</strong> Latih melihat Realitas Tunggal di balik setiap makhluk. <em>Tujuan:</em> menghilangkan dualitas ego.</li><li><strong>Dzikir Tanpa Tujuan:</strong> Berdzikir kapan saja tanpa hitungan. <em>Tujuan:</em> kuatkan Fana.</li><li><strong>Observasi Batin:</strong> Duduk hening 30 menit; amati pikiran & emosi. <em>Tujuan:</em> persiapkan Tajalli.</li></ol>"
+    }
+  },
+
+  {
+    "id":"enlightenment","name":"Pencerahan (Enlightenment)","scale_value":850,
+    "description":"Pencerahan adalah kesadaran murni, Kesatuan, dan Realitas Tertinggi.",
+    "statements":[
+      "Saya hidup dalam kesadaran bahwa saya adalah pelayan murni dari kehendak Ilahi.",
+      "Kata-kata dan nasihat saya memiliki dampak transformatif yang instan bagi para santri.",
+      "Tidak ada lagi ego atau keinginan pribadi dalam diri saya.",
+      "Saya secara alami beroperasi pada Level Kasih Sayang dan Kedamaian secara berkelanjutan.",
+      "Seluruh pengabdian saya adalah manifestasi Maqam Ilahiah."
+    ],
+    "riyadhah":{
+      "purpose":"Maqam transendental — tazkiyah telah mencapai puncak; tidak ada riyadhah terstruktur.",
+      "guidance":"<div class='small'>Maqam Pencerahan adalah keadaan transendental; tidak ada riyadhah tambahan yang terstruktur.</div>"
+    }
+  }
+]; // end LEVELS
+
+/* ------------------------------
+  App state
+  ------------------------------ */
+let APP = { nama:'', instansi:'', answers:{}, result:null };
+
+/* ------------------------------
+  UI functions
+  ------------------------------ */
+
+function start(){
+  const n = document.getElementById('nama').value.trim();
+  const ins = document.getElementById('instansi').value.trim();
+  if(!n || !ins) return alert('Mohon isi Nama dan Instansi terlebih dahulu.');
+  APP.nama = n; APP.instansi = ins;
+  buildQuestions();
+  document.getElementById('cardIntro').classList.add('hidden');
+  document.getElementById('cardTest').classList.remove('hidden');
+  window.scrollTo(0,0);
+}
+
+function buildQuestions(){
+  const container = document.getElementById('questions');
+  container.innerHTML = '';
+  let qIndex = 0;
+  LEVELS.forEach((lvl, li) => {
+    // group header but don't show level name
+    const group = document.createElement('div');
+    group.className = 'muted-box';
+    group.style.marginTop = '12px';
+    group.innerText = `Bagian ${li+1} — 5 pernyataan`;
+    container.appendChild(group);
+    lvl.statements.forEach((st, si) => {
+      const box = document.createElement('div'); box.className='statement';
+      box.innerHTML = `<div><strong>${qIndex+1}.</strong> ${st}</div>`;
+      const likert = document.createElement('div'); likert.className='likert';
+      for(let v=1; v<=5; v++){
+        const lbl = document.createElement('label');
+        lbl.innerHTML = `<input type="radio" name="q${qIndex}" value="${v}" /> ${v}`;
+        likert.appendChild(lbl);
+      }
+      box.appendChild(likert);
+      container.appendChild(box);
+      qIndex++;
+    });
+  });
+  // progress info
+  document.getElementById('progress').innerText = `Total pernyataan: ${LEVELS.length * 5}. Pastikan menjawab semua pernyataan.`;
+}
+
+/* Cancel / Reset */
+function cancelTest(){ if(confirm('Batal tes? Semua jawaban akan dibatalkan.')) { resetAll(); } }
+function resetAll(){
+  if(!confirm('Reset seluruh data pada halaman?')) return;
+  APP = { nama:'', instansi:'', answers:{}, result:null };
+  document.getElementById('nama').value=''; document.getElementById('instansi').value='';
+  document.getElementById('questions').innerHTML=''; document.getElementById('cardTest').classList.add('hidden');
+  document.getElementById('cardResult').classList.add('hidden');
+  document.getElementById('cardIntro').classList.remove('hidden');
+}
+
+/* Submit test: validate all answered, compute average per level, pick dominant */
+function submitTest(){
+  const form = document.getElementById('testForm');
+  const fd = new FormData(form);
+  const totalQuestions = LEVELS.length * 5;
+  // validate: ensure each q0..qn answered
+  for(let i=0;i<totalQuestions;i++){
+    if(!fd.get('q'+i)) return alert('Mohon jawab semua pernyataan. (Belum menjawab nomor '+(i+1)+')');
+  }
+  // compute average per level
+  let idx = 0;
+  const levelScores = LEVELS.map((lvl, i)=>{
+    let sum = 0;
+    for(let j=0;j<lvl.statements.length;j++){
+      const val = Number(fd.get('q'+idx));
+      sum += val;
+      idx++;
+    }
+    const avg = sum / lvl.statements.length;
+    return { index:i, avg, sum, count: lvl.statements.length, scale_value: lvl.scale_value || 0 };
+  });
+  // determine dominant: highest avg, tiebreaker: higher scale_value
+  let best = levelScores[0];
+  for(let s of levelScores){
+    if(s.avg > best.avg) best = s;
+    else if(s.avg === best.avg && s.scale_value > best.scale_value) best = s;
+  }
+  const dominant = LEVELS[best.index];
+  APP.result = {
+    peserta: { nama: APP.nama, instansi: APP.instansi },
+    timestamp: new Date().toISOString(),
+    dominant: { id: dominant.id, name: dominant.name, scale: dominant.scale_value, description: dominant.description, riyadhah: dominant.riyadhah },
+    answers: {} // store answers
+  };
+  // store answers
+  for(let i=0;i<totalQuestions;i++){
+    APP.result.answers['q'+(i+1)] = Number(fd.get('q'+i));
+  }
+
+  // show result
+  showResult();
+  // scroll to result
+  window.scrollTo(0,0);
+}
+
+/* render result + report form under it */
+function showResult(){
+  document.getElementById('cardTest').classList.add('hidden');
+  const meta = document.getElementById('resultMeta');
+  meta.innerText = `Nama: ${APP.result.peserta.nama} | Instansi: ${APP.result.peserta.instansi} | Waktu: ${new Date(APP.result.timestamp).toLocaleString()}`;
+  const blk = document.getElementById('resultBlock');
+  blk.innerHTML = '';
+  blk.innerHTML = `<div class="result-title">${APP.result.dominant.name}</div>
+    <div class="small" style="margin-top:8px">${APP.result.dominant.description}</div>
+    <div style="margin-top:12px"><strong>Tujuan Riyadhah:</strong><div class="muted-box" style="margin-top:6px">${APP.result.dominant.riyadhah.purpose || ''}</div></div>
+    <div style="margin-top:12px"><strong>Panduan Riyadhah Lengkap:</strong><div style="margin-top:6px">${APP.result.dominant.riyadhah.guidance || ''}</div></div>`;
+  document.getElementById('cardResult').classList.remove('hidden');
+
+  // render report form area (auto-filled nama+instansi)
+  const ra = document.getElementById('reportArea');
+  ra.innerHTML = `
+    <h3 style="margin-top:18px">Laporan Riyadhah Mingguan</h3>
+    <p class="small">Isikan tiga pertanyaan reflektif, lalu kirimkan laporan ke Supervisor.</p>
+    <form id="reportForm">
+      <label>Nama</label>
+      <input type="text" name="nama" value="${escapeHtml(APP.result.peserta.nama)}" required />
+      <label>Instansi</label>
+      <input type="text" name="instansi" value="${escapeHtml(APP.result.peserta.instansi)}" required />
+      <label>Aksi Riyadhah apa saja yang sudah Anda jalankan pekan ini?</label>
+      <textarea name="aksi" rows="3" required></textarea>
+      <label>Perubahan seperti apa yang Anda rasakan di dalam diri Anda?</label>
+      <textarea name="perubahan_diri" rows="3" required></textarea>
+      <label>Perubahan seperti apa yang Anda rasakan di sekitar/luar diri Anda?</label>
+      <textarea name="perubahan_luar" rows="3" required></textarea>
+      <div style="margin-top:10px;display:flex;gap:8px">
+        <button type="button" onclick="sendReport()">Kirim Laporan ke Supervisor</button>
+        <button type="button" class="btn-ghost" onclick="downloadReportJSON()">Unduh Laporan (JSON)</button>
+      </div>
+    </form>
+    <div id="sendingStatus" class="small" style="margin-top:8px"></div>
+  `;
+}
+
+/* helper escape */
+function escapeHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* send report: collect report fields + include assessment answers & result -> POST to Formspree */
+async function sendReport(){
+  const formEl = document.getElementById('reportForm');
+  const fd = new FormData(formEl);
+  const payload = {
+    peserta: { nama: fd.get('nama'), instansi: fd.get('instansi') },
+    waktu_asesmen: APP.result.timestamp,
+    dominant: APP.result.dominant,
+    answers: APP.result.answers,
+    laporan: {
+      aksi: fd.get('aksi'),
+      perubahan_diri: fd.get('perubahan_diri'),
+      perubahan_luar: fd.get('perubahan_luar')
+    }
+  };
+
+  const statusEl = document.getElementById('sendingStatus');
+  statusEl.innerText = 'Mengirim laporan...';
+
+  try {
+    const resp = await fetch(FORM_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Accept':'application/json' },
+      body: JSON.stringify({ text: JSON.stringify(payload, null, 2), nama: payload.peserta.nama, instansi: payload.peserta.instansi })
+    });
+    if(resp.ok){
+      statusEl.innerText = 'Laporan berhasil dikirim ke Supervisor.';
+    } else {
+      // fallback mailto
+      statusEl.innerText = 'Gagal mengirim otomatis — membuka klien email sebagai fallback.';
+      const subject = encodeURIComponent(`[LAPORAN RIYADHAH] ${payload.peserta.nama} — ${payload.dominant.name}`);
+      const body = encodeURIComponent(generatePlainReport(payload));
+      window.location.href = `mailto:multazamzakaria@gmail.com?subject=${subject}&body=${body}`;
+    }
+  } catch(err){
+    console.error(err);
+    statusEl.innerText = 'Kesalahan jaringan — membuka klien email sebagai fallback.';
+    const subject = encodeURIComponent(`[LAPORAN RIYADHAH] ${payload.peserta.nama} — ${payload.dominant.name}`);
+    const body = encodeURIComponent(generatePlainReport(payload));
+    window.location.href = `mailto:multazamzakaria@gmail.com?subject=${subject}&body=${body}`;
+  }
+}
+
+/* prepare plain text report for mailto fallback */
+function generatePlainReport(p){
+  let s='LAPORAN RIYADHAH MINGGUAN\\n';
+  s += `Nama: ${p.peserta.nama}\\nInstansi: ${p.peserta.instansi}\\nWaktu Asesmen: ${p.waktu_asesmen}\\n\\n`;
+  s += `Level Dominan: ${p.dominant.name} (Skala ${p.dominant.scale})\\n\\n`;
+  s += `-- Aksi Riyadhah yang dijalankan pekan ini --\\n${p.laporan.aksi}\\n\\n`;
+  s += `-- Perubahan di dalam diri --\\n${p.laporan.perubahan_diri}\\n\\n`;
+  s += `-- Perubahan di sekitar/luar diri --\\n${p.laporan.perubahan_luar}\\n\\n`;
+  s += `-- Data Asesmen (jawaban ringkas) --\\n${JSON.stringify(p.answers)}\\n`;
+  return s;
+}
+
+/* download functions */
+function downloadResultJSON(){
+  if(!APP.result) return alert('Belum ada hasil.');
+  const blob = new Blob([JSON.stringify(APP.result, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=`hasil_${APP.result.peserta.nama.replace(/\s+/g,'_')}.json`; a.click();
+  URL.revokeObjectURL(url);
+}
+function downloadReportJSON(){
+  if(!APP.result) return alert('Belum ada laporan.');
+  const reportEl = document.getElementById('reportForm');
+  const fd = new FormData(reportEl);
+  const payload = {
+    peserta: { nama: fd.get('nama'), instansi: fd.get('instansi') },
+    waktu_asesmen: APP.result.timestamp,
+    dominant: APP.result.dominant,
+    laporan: { aksi: fd.get('aksi'), perubahan_diri: fd.get('perubahan_diri'), perubahan_luar: fd.get('perubahan_luar')},
+    answers: APP.result.answers
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=`laporan_${payload.peserta.nama.replace(/\s+/g,'_')}.json`; a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* print */
+function downloadResultPDF(){ window.print(); }
+
+</script>
+</body>
+</html>
