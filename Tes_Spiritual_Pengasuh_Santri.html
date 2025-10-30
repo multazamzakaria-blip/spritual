@@ -1,0 +1,356 @@
+
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>TES SPIRITUAL — Pengasuh Santri</title>
+<link rel="icon" href="assets/favicon.txt">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;600;800&display=swap" rel="stylesheet">
+<style>
+:root{ --bg:#f4f7fb; --card:#fff; --muted:#516173; --accent:#254b7c; }
+*{box-sizing:border-box} body{font-family:Nunito,system-ui,-apple-system,"Segoe UI",Roboto,Arial;margin:0;background:#f4f7fb;color:#0b1220}
+.container{max-width:980px;margin:28px auto;padding:18px}
+.header{background:#fff;border-radius:12px;padding:18px;box-shadow:0 6px 18px rgba(10,20,40,.06);margin-bottom:18px}
+h1{margin:0;font-size:22px;color:var(--accent)} .sub{color:var(--muted);margin-top:6px}
+.card{background:var(--card);border-radius:12px;padding:18px;box-shadow:0 6px 20px rgba(30,50,90,.05);margin-bottom:16px}
+label{display:block;margin-top:12px;font-weight:700;color:var(--accent)}
+input[type=text], textarea, input[type=number], input[type=password]{width:100%;padding:10px;border-radius:8px;border:1px solid #e6edf2;margin-top:6px;background:#fbfdff}
+button{background:var(--accent);color:white;border:0;padding:10px 14px;border-radius:8px;cursor:pointer}
+.btn-ghost{background:transparent;color:var(--accent);border:1px solid rgba(37,75,124,.12);padding:9px;border-radius:8px}
+.small{font-size:13px;color:var(--muted)} .statement{padding:16px;border-radius:10px;background:#fff;border:1px solid #eef6ff;margin-top:12px}
+.likert{display:flex;gap:12px;margin-top:12px;align-items:center} .hidden{display:none}
+.footer{font-size:13px;color:var(--muted);text-align:center;margin-top:18px}
+.cert-wrap{background:linear-gradient(180deg,#f7f7fb,#eef2f8);border-radius:10px;padding:20px;border:1px solid rgba(37,75,124,.06)}
+.cert{max-width:760px;margin:8px auto;padding:22px;border:2px solid #e8eef8;background:linear-gradient(180deg,#fff,#fbfdff);border-radius:8px;box-shadow:0 8px 30px rgba(20,40,80,.04)}
+.cert h2{color:var(--accent);margin:6px 0} .cert .meta{color:var(--muted);margin-top:6px}
+.riyadhah-point{border-left:4px solid #eef2ff;padding:12px;margin-bottom:10px;background:#fbfcff;border-radius:6px}
+.table{width:100%;border-collapse:collapse;margin-top:12px}
+.table th,.table td{padding:8px;border-bottom:1px solid #eef4fb;text-align:left;font-size:14px}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>TES SPIRITUAL — Pengasuh Santri by Multazam Zakaria</h1>
+    <div class="sub"> Untuk Hasil yang Valid, Berikan Penilaian yang Jujur (1: Tidak Pernah, 2:Jarang, 3: Kadang-kadang, 4: Sering, 5: Selalu)</div>
+  </div>
+
+  <div class="card" id="home">
+    <label>Nama Lengkap</label><input id="nama" type="text" placeholder="Nama pengasuh..." />
+    <label>Nama Instansi / Pesantren</label><input id="instansi" type="text" placeholder="Nama pesantren / instansi..." />
+    <div style="margin-top:12px;display:flex;gap:10px;align-items:center">
+      <button onclick="startTest()">Mulai Tes Spiritual</button>
+      <button class="btn-ghost" onclick="openReport()">Laporan Riyadhah Mingguan</button>
+      <button class="btn-ghost" onclick="openMember()">Masuk sebagai Member</button>
+      <div style="flex:1"></div>
+      <button class="btn-ghost" onclick="openAdmin()">Login Admin</button>
+    </div>
+    <div style="margin-top:12px" class="small">Skala: 1 (Sangat Tidak Sesuai) — 5 (Sangat Sesuai). Data disimpan di perangkat (localStorage).</div>
+  </div>
+
+  <div class="card hidden" id="testCard">
+    <div class="small" id="qCounter"></div>
+    <div id="question" class="statement"></div>
+    <div id="likert" class="likert"></div>
+    <div style="margin-top:12px;display:flex;gap:8px">
+      <button id="prevBtn" class="btn-ghost" onclick="prevQ()">Sebelumnya</button>
+      <div style="flex:1"></div>
+      <button id="nextBtn" onclick="nextQ()">Lanjut</button>
+      <button id="finishBtn" onclick="finishTest()">Selesai & Lihat Sertifikat</button>
+      <button class="btn-ghost" onclick="cancelHome()">Batal</button>
+    </div>
+    <div id="progress" class="small" style="margin-top:10px"></div>
+  </div>
+
+  <div class="card hidden" id="resultCard">
+    <div class="cert-wrap">
+      <div class="cert">
+        <div style="text-align:center">
+          <div class="meta small"></div>
+          <h2>Level Spiritual Anda Saat Ini:</h2>
+          <div style="font-size:22px;font-weight:800;margin-top:6px" id="certLevel"></div>
+          <div class="meta" id="certDesc" style="margin-top:8px"></div>
+        </div>
+        <div style="margin-top:16px">
+          <div style="font-weight:700;font-size:16px">Data Peserta</div>
+          <div style="margin-top:8px;font-size:15px">
+            <div>Nama: <strong id="certNama"></strong></div>
+            <div>Instansi: <strong id="certInstansi"></strong></div>
+            <div>Tanggal: <strong id="certTanggal"></strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+      <button onclick="window.print()">Cetak Sertifikat</button>
+      <button class="btn-ghost" onclick="showNextRiyadhah()">Lakukan Aksi Riyadhah Naik Level</button>
+      <button class="btn-ghost" onclick="saveMember()">Simpan ke Member</button>
+      <button class="btn-ghost" onclick="goHome()">Kembali ke Beranda</button>
+    </div>
+    <div id="riyadhahArea" class="hidden" style="margin-top:14px">
+      <h3>Aksi Riyadhah Naik Level</h3>
+      <div id="riyadhahList"></div>
+    </div>
+  </div>
+
+  <div class="card hidden" id="reportCard">
+    <h3>Laporan Riyadhah Mingguan</h3>
+    <div class="small">Isi pekan dan jawablah satu per satu.</div>
+    <label>Pekan ke-</label><input id="weekNo" type="number" min="1" value="1" />
+    <div id="reportStep" style="margin-top:12px"></div>
+    <div style="margin-top:12px;display:flex;gap:8px">
+      <button id="repPrev" class="btn-ghost" onclick="repPrev()">Sebelumnya</button>
+      <div style="flex:1"></div>
+      <button id="repNext" onclick="repNext()">Lanjut</button>
+      <button id="repSend" onclick="sendReport()">Kirim ke Supervisor</button>
+      <button class="btn-ghost" onclick="goHome()">Batal</button>
+    </div>
+    <div id="reportStatus" class="small" style="margin-top:8px"></div>
+  </div>
+
+  <div class="card hidden" id="memberCard">
+    <h3>Member — Riwayat & Laporan</h3>
+    <div class="small">Masuk untuk melihat hasil tersimpan atau mengisi laporan.</div>
+    <label>Nama</label><input id="memNama" type="text" />
+    <label>Instansi</label><input id="memInst" type="text" />
+    <div style="margin-top:10px;display:flex;gap:8px">
+      <button onclick="memberLogin()">Masuk</button>
+      <button class="btn-ghost" onclick="goHome()">Batal</button>
+    </div>
+    <div id="memberArea" class="hidden" style="margin-top:14px">
+      <div>Masuk sebagai: <strong id="memberWho"></strong></div>
+      <div style="margin-top:10px">
+        <button class="btn-ghost" onclick="memberShow()">Lihat Hasil Terakhir</button>
+        <button class="btn-ghost" onclick="memberReport()">Isi Laporan Riyadhah</button>
+        <button class="btn-ghost" onclick="memberLogout()">Keluar</button>
+      </div>
+      <div id="memberInfo" style="margin-top:12px"></div>
+    </div>
+  </div>
+
+  <div class="card hidden" id="adminLogin">
+    <h3>Admin Panel</h3>
+    <div class="small">Masukkan PIN Admin untuk melihat data peserta.</div>
+    <label>PIN Admin</label><input id="adminPin" type="password" placeholder="PIN Admin" />
+    <div style="margin-top:10px">
+      <button onclick="adminAuth()">Masuk</button>
+      <button class="btn-ghost" onclick="goHome()">Batal</button>
+    </div>
+  </div>
+
+  <div class="card hidden" id="adminPanel">
+    <h3>Admin — Daftar Peserta</h3>
+    <table class="table" id="adminTable">
+      <thead><tr><th>Nama</th><th>Instansi</th><th>Level</th><th>Waktu</th><th>Aksi</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div style="margin-top:12px;display:flex;gap:8px">
+      <button onclick="exportCSV()">Ekspor CSV</button>
+      <button class="btn-ghost" onclick="adminLogout()">Keluar</button>
+    </div>
+    <div id="adminDetail" style="margin-top:12px"></div>
+  </div>
+
+  <div class="footer">© Tes Level Spiritual — Pengasuh Santri</div>
+</div>
+
+<script>
+const FORM_ENDPOINT = 'https://formspree.io/f/xwpwbypj';
+const ADMIN_PIN = 'admin123';
+const LEVELS = [{"id": "shame", "name": "Malu (Shame)", "scale": 20, "description": "Level Malu (Shame) adalah palung terdalam; identitas terasa rusak dan tidak berharga, cenderung mengisolasi diri.", "statements": ["Sering menunduk/menghindari kontak mata dengan pimpinan/rekan senior.", "Merasa diri tidak pantas memimpin atau memberi nasihat spiritual.", "Sulit berbicara di depan umum, merasa apa yang dikatakannya tidak berharga.", "Cenderung menyembunyikan kesalahan, takut dihakimi atau diekspos.", "Sering berpikir untuk mengundurkan diri karena merasa 'gagal total.'"], "riyadhah": {"purpose": "Melepaskan rasa malu, memutus isolasi, menumbuhkan penerimaan diri.", "guidance": [{"title": "Pengakuan Kecil", "steps": ["Akui 1 kelemahan/kesalahan kecil kepada rekan tepercaya tiap minggu.", "Tujuan: memutus rahasia batin dan membuka koneksi."]}, {"title": "Ambil Tanggung Jawab Sederhana", "steps": ["Ambil 1 tugas tambahan termudah dan selesaikan melebihi ekspektasi.", "Afirmasi setelah selesai: 'Saya mampu menyelesaikan ini dengan baik.'"]}, {"title": "Afirmasi Nilai Diri", "steps": ["Tuliskan 3 nilai/keahlian diri dan baca setiap pagi 40 hari."]}, {"title": "Istighfar Harian", "steps": ["Baca 'Astaghfirullahal Adzim' 100x setiap hari."]}, {"title": "Salat Taubat", "steps": ["Salat Taubat 2 rakaat 1–2x/minggu; fokus self-hatred."]}, {"title": "Surat Cinta Diri", "steps": ["Tulis 1 halaman: Maaf & Terima Kasih untuk diri."]}]}}, {"id": "guilt", "name": "Rasa Bersalah (Guilt)", "scale": 30, "description": "Langkah maju dari Malu: 'saya melakukan kesalahan', namun energi terikat pada penyesalan dan hukuman diri.", "statements": ["Terlalu keras menghukum diri atas kegagalan/kesalahan santri.", "Sering menyalahkan sistem atau rekan di depan pihak luar.", "Mengatakan bahwa ia 'pantas dihukum'.", "Menganggap masalah santri balasan atas dosa masa lalu.", "Fokus pada kesalahan masa lalu, bukan solusi kini."], "riyadhah": {"purpose": "Menghentikan penghukuman diri, meredakan kecemasan, menerima diri.", "guidance": [{"title": "Feedback Terbalik", "steps": ["Minta rekan/santri menyebut 1 hal yang Anda lakukan baik.", "Geser fokus dari kesalahan ke potensi."]}, {"title": "Bicara Solusi", "steps": ["Saat guilt muncul, tulis 5 solusi praktis, bukan masalah."]}, {"title": "Prinsip Amanah", "steps": ["Tempel tulisan: 'Pengasuhan adalah Amanah, bukan Hukuman'."]}, {"title": "Tasbih", "steps": ["Subhanallah 100x setiap selesai salat wajib."]}, {"title": "Butterfly Hug", "steps": ["Tepuk bergantian kiri–kanan di dada 1–2 menit saat cemas."]}, {"title": "SEFT/EFT", "steps": ["Ketuk titik meridian sambil afirmasi penerimaan diri."]}]}}, {"id": "apathy", "name": "Apatis (Apathy)", "scale": 50, "description": "Putus asa; mati rasa; menyerah total. Energi sangat rendah dan melihat diri sebagai korban.", "statements": ["Malas membuat program baru atau evaluasi program lama.", "Menjawab masalah santri dengan 'terserah/sudah takdir'.", "Sering absen piket/pertemuan tanpa alasan kuat.", "Menunda pekerjaan penting hingga batas akhir.", "Wajah datar/kosong saat menghadapi santri bermasalah."], "riyadhah": {"purpose": "Aktifkan energi & kehendak, tarik energi ke tubuh.", "guidance": [{"title": "Tugas Wajib Menantang", "steps": ["Buat 3 tugas di luar rutinitas dan selesaikan."]}, {"title": "Ubah Pola Harian", "steps": ["7 hari ganti rute, tempat makan, atau jadwal."]}, {"title": "Fokus Kesehatan", "steps": ["Batasi kafein/gula 7 hari, jalan 30 menit/hari."]}, {"title": "Yaa Hayyu Yaa Qayyum", "steps": ["Dzikir 70x setelah Subuh."]}, {"title": "Salat Fajar", "steps": ["Kerjakan Qabliyah Subuh tepat waktu."]}, {"title": "Mandi Taubat", "steps": ["1x/minggu; niat bersihkan energi lesu."]}, {"title": "Sadar Mengunyah", "steps": ["Kunyah 15–20x tiap suapan; hadir penuh."]}]}}, {"id": "grief", "name": "Sedih (Grief)", "scale": 75, "description": "Duka aktif yang terikat masa lalu; energi hidup namun melumpuhkan bila berlarut.", "statements": ["Sering mengungkit masalah santri yang sudah berlalu.", "Cepat terpuruk saat dikritik pimpinan.", "Sulit melepas kecewa atas kegagalan proyek lalu.", "Menganggap pengasuhan selalu merugikan.", "Mencari simpati rekan tentang beratnya beban."], "riyadhah": {"purpose": "Alihkan fokus ke depan, grounding, syukur.", "guidance": [{"title": "Jurnal Masa Depan", "steps": ["Tulis 5 target bulan depan di asrama."]}, {"title": "Aksi Kontrol Kecil", "steps": ["Bereskan satu area kacau hingga tuntas."]}, {"title": "Syukur Realistis", "steps": ["Catat 5 momen positif tiap malam."]}, {"title": "Hamdalah", "steps": ["Alhamdulillah 100x setelah Maghrib."]}, {"title": "Jalan Hening", "steps": ["Jalan 10–15 menit tanpa alas sambil dzikir."]}, {"title": "Salam pada Makhluk", "steps": ["Ucap salam tulus pada pohon/bunga/hewan."]}]}}, {"id": "fear", "name": "Takut (Fear)", "scale": 100, "description": "Cemas konstan; dunia terasa tidak aman. Dorongan survival ada, namun reaktif.", "statements": ["Terlalu kaku pada aturan karena takut disalahkan.", "Sangat cemas menjelang evaluasi pimpinan.", "Takut ambil keputusan mandiri; menunggu instruksi.", "Takut mencoba metode baru karena takut gagal.", "Memeriksa santri berlebihan (overcontrol)."], "riyadhah": {"purpose": "Latih kemandirian, rasa aman batin, keberanian risiko kecil.", "guidance": [{"title": "Latihan Otonomi", "steps": ["Ambil 3 keputusan penting (nonfatal) tanpa konsultasi."]}, {"title": "Metode Baru", "steps": ["Coba 1 metode yang Anda takut gagal seminggu penuh."]}, {"title": "Kepercayaan Kecil", "steps": ["Kurangi razia mendadak, beri tugas penuh tanggung jawab."]}, {"title": "Hasbunallah", "steps": ["Dzikir 100x setelah Isya."]}, {"title": "Doakan yang Mengkhawatirkan", "steps": ["Doakan orang yang paling membuat Anda cemas."]}, {"title": "Mandi Taubat", "steps": ["1x/minggu; niat bersihkan 'wahn'."]}]}}, {"id": "desire", "name": "Keinginan (Desire)", "scale": 125, "description": "Energi aktif mendorong tindakan, namun terikat hasil eksternal sehingga mudah kecewa.", "statements": ["Bekerja jika ada imbalan atau pujian.", "Frustrasi bila proyek tidak diakui.", "Terobsesi hasil, bukan proses santri.", "Mengeluh saat tugas tidak sesuai keinginan.", "Sering bercerita keberhasilan masa lalu."], "riyadhah": {"purpose": "Kendalikan diri, murnikan niat, tegaskan batas.", "guidance": [{"title": "Tunda Kepuasan", "steps": ["Tunda 24 jam sebelum memamerkan capaian."]}, {"title": "Tugas Tanpa Pamrih", "steps": ["Ambil 3 tugas back-office yang tak terlihat."]}, {"title": "Tegaskan Batas", "steps": ["Katakan 'Tidak' sopan pada 3 permintaan melanggar batas."]}, {"title": "Dzikir Tauhid", "steps": ["Lailahaillallah 100x."]}, {"title": "La Hawla", "steps": ["La hawla wa la quwwata illa billah 100x saat dorongan nafsu."]}, {"title": "Sadar Mengunyah", "steps": ["Kunyah 15–20x setiap makan."]}]}}, {"id": "anger", "name": "Marah (Anger)", "scale": 150, "description": "Energi sangat tinggi namun destruktif; intimidasi/ledakan emosi sebagai alat kontrol.", "statements": ["Meninggikan suara/membentak saat frustrasi.", "Defensif saat dikritik.", "Mengeluh tentang rekan di belakang.", "Hukuman berlebihan/tidak konsisten.", "Tindakan impulsif tanpa pikir panjang."], "riyadhah": {"purpose": "Ubah reaksi jadi rasional; kendalikan emosi.", "guidance": [{"title": "Pause & Analysis", "steps": ["Jeda 5 detik, napas 3x, tulis 3 alasan logis."]}, {"title": "Dokumentasi Rasional", "steps": ["Ubah keluhan emosional jadi laporan objektif."]}, {"title": "Ego Sehat", "steps": ["Catat hal yang dibanggakan tentang metode."]}, {"title": "Ta'awudz", "steps": ["A'udzubillahi minasy syaithonir rajim 100x."]}, {"title": "Ya Halim/Ya Wadud", "steps": ["Ucap 10x dengan perenungan."]}, {"title": "Surat Cinta Orang Lain", "steps": ["Tulis 'Maaf & Terima Kasih' untuk pemicu amarah."]}]}}, {"id": "pride", "name": "Bangga (Pride)", "scale": 175, "description": "Ketenangan semu karena pembenaran diri; tampak berwibawa namun rapuh & defensif.", "statements": ["Sulit menerima metode lain yang lebih baik.", "Merasa lebih senior/pintar dari rekan/santri.", "Memberi nasihat menggurui tanpa diminta.", "Membenarkan kegagalan karena kualitas santri.", "Menolak feedback dari santri."], "riyadhah": {"purpose": "Runtuhkan arogansi, ambil tanggung jawab, latih keberanian.", "guidance": [{"title": "Runtuhkan Superioritas", "steps": ["Minta kritik radikal dari 2 orang; tindaklanjuti 1 saran."]}, {"title": "Tanggung Jawab Penuh", "steps": ["Akui 1 kesalahan sistemik di depan rekan."]}, {"title": "Risiko Moral", "steps": ["Bela keberanian santri yang dikritik (dengan batas)."]}, {"title": "Subhana Rabbi al-Adzim", "steps": ["Dzikir 100x; besarkan Allah, kecilkan ego."]}, {"title": "Renungkan Ketidaksempurnaan", "steps": ["Tulis 3 hal tak bisa diperbaiki; terima."]}]}}, {"id": "courage", "name": "Keberanian (Courage)", "scale": 200, "description": "Titik kritis; masalah = tantangan; aktif belajar & mencoba metode baru.", "statements": ["Berani akui kesalahan di depan publik tanpa menyalahkan.", "Ambil keputusan berisiko demi pertumbuhan santri.", "Melihat kesulitan sebagai tantangan.", "Proaktif ajukan perbaikan sistem.", "Mendukung rekan yang dikritik."], "riyadhah": {"purpose": "Ubah netralitas jadi kemauan aktif & antusias.", "guidance": [{"title": "Extra Mile", "steps": ["Ambil 1 tugas non-wajib dan selesaikan antusias."]}, {"title": "Ekspresi Antusiasme", "steps": ["Bahasa tubuh & kata positif pada 5 tugas rutin."]}, {"title": "Hentikan 'Cukup'", "steps": ["Cari 1 perbaikan kecil lagi setiap kali."]}, {"title": "Salat Dhuha", "steps": ["Minimal 4 rakaat; fokus syukur."]}, {"title": "Yaa Muqallib al-qulub", "steps": ["Dzikir 100x mohon hati aktif."]}, {"title": "Jalan Hening (aktif)", "steps": ["Jalan tanpa alas; niat tarik energi bumi."]}]}}, {"id": "neutrality", "name": "Netralitas (Neutrality)", "scale": 250, "description": "Kenyamanan, kelenturan, non-judging; tenang hadapi krisis; fleksibel pada perubahan.", "statements": ["Mediator adil tanpa memihak.", "Tenang & stabil tanpa drama.", "Menerima perubahan jadwal/aturan dengan fleksibel.", "Berinteraksi baik dengan semua rekan tanpa sentimen.", "Konsisten & teratur meski ada tekanan luar."], "riyadhah": {"purpose": "Ubah netralitas menjadi kemauan aktif (menuju Willingness).", "guidance": [{"title": "Extra Mile", "steps": ["Ambil 1 tugas tambahan; selesaikan antusias."]}, {"title": "Antusias Rutin", "steps": ["Tunjukkan antusias terhadap 5 tugas rutin."]}, {"title": "Stop 'Cukup'", "steps": ["Selalu cari 1 peningkatan kecil."]}, {"title": "Salat Dhuha", "steps": ["4 rakaat dengan syukur."]}, {"title": "Yaa Muqallib al-qulub", "steps": ["100x; mohon hati aktif."]}, {"title": "Jalan Hening", "steps": ["Grounding untuk stabilkan semangat."]}]}}, {"id": "willingness", "name": "Kemauan (Willingness)", "scale": 310, "description": "Proaktif, antusias, komitmen pada perbaikan & pembelajaran; melihat peluang.", "statements": ["Sukarela bantu pekerjaan sulit.", "Antusias tinggi membuat program baru.", "Selalu cari cara, bukan alasan.", "Cepat bangkit setelah gagal.", "Melihat potensi positif setiap santri."], "riyadhah": {"purpose": "Lepaskan keterikatan pada effort; siapkan Acceptance.", "guidance": [{"title": "Memaafkan Total", "steps": ["Tuliskan daftar yang menghambat; lepaskan & maafkan."]}, {"title": "Solusi Sistemik", "steps": ["Rumuskan 1 perubahan sistem kecil yang memudahkan semua."]}, {"title": "Syukur Proses", "steps": ["Syukuri kesempatan berjuang, bukan hanya hasil."]}, {"title": "Radhitu billahi rabba", "steps": ["3x setelah salat wajib."]}, {"title": "Doakan Ridho", "steps": ["Doakan orang lain agar diberi penerimaan."]}]}}, {"id": "acceptance", "name": "Penerimaan (Acceptance)", "scale": 350, "description": "Damai: segala sesuatu berjalan sebagaimana mestinya; bebas dari keterikatan emosional pada hasil.", "statements": ["Menerima keterbatasan realitas tanpa mengeluh.", "Memaafkan kesalahan besar dengan tulus.", "Fokus pada solusi sistemik, bukan menyalahkan.", "Kritik sebagai umpan balik, bukan serangan.", "Tenang meski hasil tidak sempurna; syukur proses."], "riyadhah": {"purpose": "Ubah penerimaan pasif jadi pengetahuan & struktur (menuju Reason).", "guidance": [{"title": "Sistematika Emosi", "steps": ["Catat pemicu, reaksi, pola emosi harian."]}, {"title": "Penelitian Metode", "steps": ["Baca 1 artikel/buku; ambil 3 poin aplikatif."]}, {"title": "Hipotesis Akar Masalah", "steps": ["Buat hipotesis untuk isu berulang."]}, {"title": "Inna Fatahna & Hajat", "steps": ["Baca 7x, salat hajat 2 rakaat."]}, {"title": "Sadar Mengunyah (Analitis)", "steps": ["Analisis nutrisi/energi yang masuk saat makan."]}]}}, {"id": "reason", "name": "Akal Budi (Reason)", "scale": 400, "description": "Intelektual, logis, rasional; puncak efektivitas tanpa stres. Risiko: hati dingin jika logika dominan.", "statements": ["Merumuskan masalah menjadi hipotesis uji.", "Keputusan berbasis data & analisis mendalam.", "Rutin membaca/meneliti metode pengasuhan.", "Melihat sebab-akibat kompleks perilaku santri.", "Emosi stabil mendukung berpikir objektif."], "riyadhah": {"purpose": "Melebur logika ke kasih sayang & rahmat (menuju Love).", "guidance": [{"title": "Pengampunan Tak Logis", "steps": ["Maafkan pihak yang menurut logika tak pantas dimaafkan."]}, {"title": "Meditasi Rahmat", "steps": ["10 menit visualisasi cahaya rahmat memenuhi hati."]}, {"title": "Kebaikan Tanpa Balas", "steps": ["3 kebaikan kecil tanpa berharap terima kasih."]}, {"title": "Selawat Nabi", "steps": ["Minimal 300x/hari."]}, {"title": "Ya Wadud", "steps": ["Dzikir 100x merenungi cinta Allah."]}, {"title": "Salam Penuh Cinta", "steps": ["Salam pada 10 makhluk/benda; rasakan koneksi."]}]}}, {"id": "love", "name": "Cinta (Love)", "scale": 500, "description": "Kasih sayang tanpa syarat; melihat keindahan & kesatuan; memimpin dengan welas asih.", "statements": ["Memberi kasih pada santri yang paling sulit.", "Mendahulukan kebaikan bersama daripada aturan kaku.", "Melihat potensi Ilahi di balik kekurangan.", "Terhubung mendalam dengan komunitas pesantren.", "Memaafkan tanpa mengharap balasan."], "riyadhah": {"purpose": "Ringankan cinta menjadi suka cita (menuju Joy).", "guidance": [{"title": "Tawa & Ringan", "steps": ["Cari 3 momen tertawa lepas tiap hari."]}, {"title": "Pelayanan Gembira", "steps": ["Lakukan tugas pelayanan dengan hati ringan."]}, {"title": "Syukur Spontan", "steps": ["Ucap 'Alhamdulillah' pada momen indah kecil."]}, {"title": "Tasbih & Takbir", "steps": ["Subhanallah & Allahu Akbar total 100x."]}, {"title": "Salam Penuh Cinta (Hadir)", "steps": ["Salam pada 10 makhluk dengan hadir total."]}]}}, {"id": "joy", "name": "Suka Cita (Joy)", "scale": 540, "description": "Kebahagiaan batin stabil; riang & transformatif; sumber kebahagiaan bagi sekitar.", "statements": ["Tugas terberat dilakukan dengan senyum tulus.", "Bahagia intrinsik, tak bergantung pujian/hasil.", "Menertawakan kesalahan diri & orang lain.", "Memancarkan damai & optimisme yang menular.", "Bersyukur dalam setiap momen."], "riyadhah": {"purpose": "Stabilkan joy menjadi sakinah (menuju Peace).", "guidance": [{"title": "Alarm Hudhūr", "steps": ["Setel alarm tiap 1 jam; hening 30–60 detik."]}, {"title": "Diam 1 Jam", "steps": ["Duduk hening 1 jam/hari (murāqabah)."]}, {"title": "Kendalikan Sensasi", "steps": ["Amati sensasi joy tanpa mengekspresikan berlebihan."]}, {"title": "Hentikan Effort", "steps": ["Lepas upaya 'ingin mencapai' — lakukan tanpa pamrih."]}, {"title": "Ismu Dzat (Allah)", "steps": ["Dzikir khāfī 1000x; fokus getaran hati."]}, {"title": "Jalan Hening Meditatif", "steps": ["Jalan tanpa alas; amati keheningan."]}]}}, {"id": "peace", "name": "Kedamaian (Peace)", "scale": 600, "description": "Transendensi; keheningan mendalam; ketenangan absolut; teladan ketenteraman.", "statements": ["Mampu mencapai keheningan batin lama.", "Kehadiran menenangkan suasana asrama.", "Pikiran, ucapan, tindakan selaras.", "Tanpa ketakutan/kekhawatiran tentang masa depan.", "Tindakan digerakkan Fadhl, bukan usaha pribadi."], "riyadhah": {"purpose": "Fana (peleburan ego) & manifestasi Wahdah (Kesatuan).", "guidance": [{"title": "Persepsi Kesatuan", "steps": ["Lihat Asma Allah di balik tiap makhluk/peristiwa."]}, {"title": "Dzikir Tanpa Tujuan", "steps": ["Berdzikir kapan saja tanpa hitungan & harapan."]}, {"title": "Observasi Batin", "steps": ["Duduk hening 30 menit; amati pikiran/emosi sebagai objek."]}, {"title": "Laa ilaaha illa Huwa", "steps": ["Dzikir tauhid dengan hudhūr."]}, {"title": "Sadar Mengunyah (Kesatuan)", "steps": ["Rasakan kesatuan diri–makanan–Pencipta."]}, {"title": "Hening Total", "steps": ["Jadikan hening batin sebagai kebiasaan hidup."]}]}}, {"id": "enlightenment", "name": "Pencerahan (Enlightenment)", "scale": 850, "description": "Kesadaran murni & Realitas Tertinggi; manifestasi kasih sayang Ilahi; puncak perjalanan.", "statements": ["Hidup sebagai pelayan murni Kehendak Ilahi.", "Nasihat berdampak transformatif instan.", "Tanpa ego atau keinginan pribadi.", "Beroperasi pada Kasih & Damai berkelanjutan.", "Pengabdian sebagai manifestasi Maqam Ilahiah."], "riyadhah": {"purpose": "—", "guidance": [{"title": "Maqam Pencerahan", "steps": ["Tidak ada riyadhah baru; seluruh hidup adalah riyadhah."]}]}}];
+
+let app = {
+  nama:'', instansi:'', currentQ:0, totalQ:LEVELS.length*5, answers:Array(LEVELS.length*5).fill(null),
+  result:null, report:{current:0, answers:['','','']}, member:null
+};
+
+function qs(id){return document.getElementById(id)}
+function show(id){document.querySelectorAll('.card').forEach(c=>c.classList.add('hidden')); qs(id).classList.remove('hidden'); window.scrollTo(0,0);}
+function goHome(){show('home')}
+function cancelHome(){if(confirm('Batalkan tes dan kembali?')) goHome();}
+
+function startTest(){
+  const n=qs('nama').value.trim(), ins=qs('instansi').value.trim();
+  if(!n||!ins) return alert('Mohon isi Nama & Instansi terlebih dahulu.');
+  app.nama=n; app.instansi=ins; app.currentQ=0; app.answers=Array(app.totalQ).fill(null);
+  show('testCard'); renderQuestion();
+}
+
+function renderQuestion(){
+  const i=app.currentQ, li=Math.floor(i/5), si=i%5;
+  qs('qCounter').innerText = `Pertanyaan ${i+1} / ${app.totalQ}`;
+  qs('question').innerHTML = `<strong>${i+1}.</strong> ${LEVELS[li].statements[si]}`;
+  const box = qs('likert'); box.innerHTML='';
+  for(let v=1; v<=5; v++){ const b=document.createElement('button'); b.textContent=v; b.className=(app.answers[i]===v)?'':'btn-ghost'; b.style.minWidth='44px'; b.onclick=()=>{app.answers[i]=v; renderQuestion();}; box.appendChild(b);}
+  qs('prevBtn').classList.toggle('hidden', i===0);
+  qs('nextBtn').classList.toggle('hidden', i===app.totalQ-1);
+  qs('finishBtn').classList.toggle('hidden', i!==app.totalQ-1);
+  qs('progress').innerText = `Terisi: ${app.answers.filter(x=>x!==null).length} / ${app.totalQ}`;
+}
+
+function nextQ(){ if(app.answers[app.currentQ]==null) return alert('Mohon pilih jawaban.'); app.currentQ++; renderQuestion(); }
+function prevQ(){ app.currentQ--; renderQuestion(); }
+
+function finishTest(){
+  if(app.answers.includes(null)) return alert('Mohon jawab semua.');
+  const scores=[]; let idx=0;
+  for(let i=0;i<LEVELS.length;i++){ let sum=0; for(let j=0;j<5;j++) sum+=app.answers[idx++]; scores.push({index:i, avg:sum/5}); }
+  let best=scores[0]; for(const s of scores){ if(s.avg>best.avg) best=s; else if(s.avg===best.avg && s.index>best.index) best=s; }
+  const dom=LEVELS[best.index];
+  app.result = { nama:app.nama, instansi:app.instansi, time:new Date().toISOString(), dominantIndex:best.index, dominant:dom, answers:app.answers };
+  qs('certNama').innerText = app.nama;
+  qs('certInstansi').innerText = app.instansi;
+  qs('certTanggal').innerText = new Date(app.result.time).toLocaleString();
+  qs('certLevel').innerText = dom.name;
+  qs('certDesc').innerText = dom.description || '';
+  qs('riyadhahList').innerHTML=''; qs('riyadhahArea').classList.add('hidden');
+  show('resultCard');
+}
+
+function showNextRiyadhah(){
+  if(!app.result) return;
+  const idx = Math.min(LEVELS.length-1, app.result.dominantIndex+1);
+  const target = LEVELS[idx];
+  const list = qs('riyadhahList'); list.innerHTML='';
+  const guidance = (target.riyadhah && target.riyadhah.guidance)||[];
+  guidance.forEach((g,i)=>{
+    const div=document.createElement('div'); div.className='riyadhah-point';
+    let html = `<strong>${i+1}. ${g.title||'Aksi'}</strong>`;
+    if(g.steps && g.steps.length){ html += '<ul style="margin-top:8px;padding-left:18px;margin-bottom:0">'; g.steps.forEach(s => html += `<li style="margin-bottom:6px">${s}</li>`); html += '</ul>'; }
+    else html += `<div style="margin-top:8px">${g}</div>`;
+    div.innerHTML = html; list.appendChild(div);
+  });
+  qs('riyadhahArea').classList.remove('hidden');
+  window.scrollTo(0,0);
+}
+
+function saveMember(){
+  if(!app.result) return alert('Belum ada hasil.');
+  const key = `tsp_${app.result.nama.replace(/\s+/g,'_')}_${app.result.instansi.replace(/\s+/g,'_')}`;
+  localStorage.setItem(key, JSON.stringify(app.result));
+  let idx = JSON.parse(localStorage.getItem('tsp_index')||'[]');
+  if(!idx.find(i=>i.key===key)) idx.push({key, nama:app.result.nama, instansi:app.result.instansi, time:app.result.time, level:app.result.dominant.name});
+  localStorage.setItem('tsp_index', JSON.stringify(idx));
+  alert('Hasil disimpan. Anda dapat mengaksesnya dari menu Member.');
+}
+
+function openMember(){ show('memberCard'); qs('memNama').value = qs('nama').value; qs('memInst').value = qs('instansi').value; }
+function memberLogin(){
+  const n=qs('memNama').value.trim(), ins=qs('memInst').value.trim();
+  if(!n||!ins) return alert('Nama & Instansi wajib.');
+  app.member = {nama:n, instansi:ins}; qs('memberArea').classList.remove('hidden');
+  qs('memberWho').innerText = `${n} — ${ins}`;
+  const key = `tsp_${n.replace(/\s+/g,'_')}_${ins.replace(/\s+/g,'_')}`;
+  const data = localStorage.getItem(key);
+  qs('memberInfo').innerHTML = data ? `Hasil terakhir: <strong>${JSON.parse(data).dominant.name}</strong> (${new Date(JSON.parse(data).time).toLocaleString()})` : 'Belum ada hasil.';
+}
+function memberShow(){
+  const n=app.member?.nama, ins=app.member?.instansi; if(!n||!ins) return alert('Belum login member.');
+  const key = `tsp_${n.replace(/\s+/g,'_')}_${ins.replace(/\s+/g,'_')}`; const data = localStorage.getItem(key);
+  if(!data) return alert('Tidak ada hasil tersimpan.');
+  const r = JSON.parse(data); app.result = r;
+  qs('certNama').innerText = r.nama; qs('certInstansi').innerText = r.instansi; qs('certTanggal').innerText = new Date(r.time).toLocaleString();
+  qs('certLevel').innerText = r.dominant.name; qs('certDesc').innerText = r.dominant.description || '';
+  show('resultCard');
+}
+function memberReport(){ show('reportCard'); app.report = {current:0, answers:['','','']}; renderReportStep(); }
+function memberLogout(){ app.member=null; show('home'); }
+
+const reportQ = [
+  'Aksi Riyadhah apa saja yang sudah Anda jalankan pekan ini?',
+  'Perubahan seperti apa yang Anda rasakan di dalam diri Anda?',
+  'Perubahan seperti apa yang Anda rasakan di sekitar/luar diri Anda?'
+];
+function openReport(){
+  const n=qs('nama').value.trim(), ins=qs('instansi').value.trim();
+  if(!n||!ins) return alert('Isi Nama & Instansi di beranda.');
+  app.nama=n; app.instansi=ins; app.report={current:0, answers:['','','']};
+  renderReportStep(); show('reportCard');
+}
+function renderReportStep(){
+  const i=app.report.current;
+  qs('reportStep').innerHTML = `<label>${reportQ[i]}</label><textarea id="repAns" rows="6">${app.report.answers[i]||''}</textarea>`;
+  qs('repPrev').classList.toggle('hidden', i===0);
+  qs('repNext').classList.toggle('hidden', i===reportQ.length-1);
+  qs('repSend').classList.toggle('hidden', i!==reportQ.length-1);
+}
+function repNext(){
+  const v=qs('repAns').value.trim(); if(!v) return alert('Mohon isi jawaban lebih dulu.');
+  app.report.answers[app.report.current]=v; app.report.current++; renderReportStep();
+}
+function repPrev(){ app.report.current--; renderReportStep(); }
+async function sendReport(){
+  const v=qs('repAns').value.trim(); if(!v) return alert('Mohon isi jawaban.');
+  app.report.answers[app.report.current]=v;
+  const payload = {
+    nama: app.nama, instansi: app.instansi, pekan: qs('weekNo').value || '1', waktu: new Date().toISOString(),
+    dominant: app.result ? app.result.dominant.name : '',
+    laporan: { aksi: app.report.answers[0], perubahan_diri: app.report.answers[1], perubahan_luar: app.report.answers[2] },
+    answers: app.result ? app.result.answers : []
+  };
+  qs('reportStatus').innerText = 'Mengirim laporan...';
+  try{
+    const res = await fetch(FORM_ENDPOINT, {method:'POST', headers:{'Content-Type':'application/json','Accept':'application/json'}, body: JSON.stringify({ text: JSON.stringify(payload,null,2), nama: payload.nama, instansi: payload.instansi })});
+    if(res.ok) qs('reportStatus').innerText='Terima kasih — laporan berhasil dikirim.';
+    else {
+      qs('reportStatus').innerText='Gagal otomatis; membuka email.';
+      const subj = encodeURIComponent(`[LAPORAN RIYADHAH] ${payload.nama} — ${payload.dominant||'Belum dinilai'}`);
+      const body = encodeURIComponent(JSON.stringify(payload,null,2));
+      window.location.href=`mailto:multazamzakaria@gmail.com?subject=${subj}&body=${body}`;
+    }
+  }catch(e){
+    qs('reportStatus').innerText='Kesalahan jaringan; membuka email.';
+    const subj = encodeURIComponent(`[LAPORAN RIYADHAH] ${payload.nama} — ${payload.dominant||'Belum dinilai'}`);
+    const body = encodeURIComponent(JSON.stringify(payload,null,2));
+    window.location.href=`mailto:multazamzakaria@gmail.com?subject=${subj}&body=${body}`;
+  }
+}
+
+// Admin
+function openAdmin(){ show('adminLogin'); }
+function adminAuth(){ const p=qs('adminPin').value.trim(); if(p===ADMIN_PIN){ loadAdmin(); show('adminPanel'); } else alert('PIN salah.'); }
+function adminLogout(){ qs('adminPin').value=''; show('home'); }
+function loadAdmin(){
+  const tbody = qs('adminTable').querySelector('tbody'); tbody.innerHTML='';
+  const idx = JSON.parse(localStorage.getItem('tsp_index')||'[]');
+  idx.forEach(item=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML = `<td>${item.nama}</td><td>${item.instansi}</td><td>${item.level||''}</td><td>${new Date(item.time).toLocaleString()}</td>
+    <td><button class='btn-ghost' onclick="adminView('${item.key}')">Lihat</button> <button class='btn-ghost' onclick="adminDel('${item.key}')">Hapus</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+function adminView(key){
+  const data = JSON.parse(localStorage.getItem(key)||'null'); if(!data) return alert('Data tidak ditemukan.');
+  let html = `<div><strong>${data.nama}</strong> — ${data.instansi}</div><div class='small'>${new Date(data.time).toLocaleString()}</div>`;
+  html += `<div style='margin-top:8px'><strong>Level:</strong> ${data.dominant?.name||''}</div>`;
+  html += `<pre style='white-space:pre-wrap;background:#fbfbfd;border:1px solid #eef2ff;padding:10px;border-radius:8px;margin-top:8px'>${JSON.stringify(data,null,2)}</pre>`;
+  qs('adminDetail').innerHTML = html;
+}
+function adminDel(key){
+  if(!confirm('Hapus data ini dari perangkat?')) return;
+  localStorage.removeItem(key);
+  let idx = JSON.parse(localStorage.getItem('tsp_index')||'[]');
+  idx = idx.filter(i=>i.key!==key);
+  localStorage.setItem('tsp_index', JSON.stringify(idx));
+  loadAdmin();
+}
+function exportCSV(){
+  const idx = JSON.parse(localStorage.getItem('tsp_index')||'[]');
+  if(!idx.length) return alert('Tidak ada data untuk diekspor.');
+  const rows = [['Nama','Instansi','Level','Waktu','Jawaban']];
+  idx.forEach(item=>{
+    const data = JSON.parse(localStorage.getItem(item.key)||'null')||{};
+    rows.push([ data.nama||item.nama, data.instansi||item.instansi, (data.dominant&&data.dominant.name)||item.level, new Date((data.time||item.time)).toLocaleString(), JSON.stringify(data.answers||[]) ]);
+  });
+  const csv = rows.map(r=> r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='tsp_export.csv'; a.click(); URL.revokeObjectURL(url);
+}
+
+// init
+goHome();
+</script>
+</body>
+</html>
